@@ -1,0 +1,47 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: user-service
+
+  # H2 内存数据库（学习环境无需安装数据库）
+  datasource:
+    url: jdbc:h2:mem:userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true          # 开启 H2 控制台：http://localhost:8084/h2-console
+      path: /h2-console
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop  # 每次启动重建表（学习模式）
+    show-sql: false
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+
+# JWT 配置
+jwt:
+  # 签名密钥（生产环境请通过环境变量注入，至少 32 字符）
+  secret: ${JWT_SECRET:rabbitmq-study-secret-key-must-be-at-least-32bytes!}
+  expiration: 86400   # 24 小时（秒）
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.study: DEBUG

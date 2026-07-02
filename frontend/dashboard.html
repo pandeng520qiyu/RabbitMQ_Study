@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>仪表板 · RabbitMQ 学习平台</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ─── 布局 ─── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ─── 侧边栏 ─── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: #1e293b;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .sidebar-logo span { font-size: 28px; }
+
+    .sidebar-logo h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.3;
+    }
+
+    .sidebar-logo small { font-size: 11px; color: #94a3b8; }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 0;
+    }
+
+    .nav-group-label {
+      padding: 12px 20px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #475569;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 0;
+      transition: background 0.15s;
+      font-size: 14px;
+      color: #94a3b8;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: #334155;
+      color: #e2e8f0;
+    }
+
+    .nav-item.active {
+      background: #334155;
+      color: #ff6600;
+      border-left-color: #ff6600;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #334155;
+      font-size: 13px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #ff6600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #fff;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .user-detail strong { display: block; color: #f1f5f9; font-size: 13px; }
+    .user-detail span   { font-size: 11px; color: #64748b; }
+
+    .logout-btn {
+      width: 100%;
+      padding: 8px;
+      background: transparent;
+      border: 1px solid #334155;
+      color: #94a3b8;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover { background: #334155; color: #ef4444; border-color: #ef4444; }
+
+    /* ─── 主内容区 ─── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .topbar h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .topbar .breadcrumb {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+    }
+
+    /* ─── 页面（仅一页可见） ─── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── 统计卡片 ─── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 4px 0;
+    }
+
+    .stat-card .desc {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* ─── 概念卡片 ─── */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .concept-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid #e2e8f0;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .concept-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgb(0 0 0 / 0.08);
+    }
+
+    .concept-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .concept-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+
+    .concept-desc {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    .concept-tag {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 3px 10px;
+      background: #fff7ed;
+      color: #ff6600;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ─── 流程图 ─── */
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      padding: 20px 0 8px;
+      flex-wrap: nowrap;
+    }
+
+    .flow-node {
+      flex-shrink: 0;
+      text-align: center;
+      padding: 12px 16px;
+      border-radius: 10px;
+      min-width: 90px;
+    }
+
+    .flow-node .node-icon { font-size: 24px; }
+    .flow-node .node-name { font-size: 12px; font-weight: 600; margin-top: 4px; }
+    .flow-node .node-sub  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+    .flow-node.producer  { background: #fef3c7; }
+    .flow-node.exchange  { background: #dbeafe; }
+    .flow-node.queue     { background: #dcfce7; }
+    .flow-node.consumer  { background: #fce7f3; }
+
+    .flow-arrow {
+      flex-shrink: 0;
+      font-size: 20px;
+      color: #94a3b8;
+      padding: 0 4px;
+    }
+
+    /* ─── 订单表单 ─── */
+    .order-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .order-form-grid { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+
+    /* ─── 代码块 ─── */
+    .code-block {
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+
+    .code-block .kw { color: #93c5fd; }
+    .code-block .st { color: #86efac; }
+    .code-block .cm { color: #64748b; }
+
+    /* ─── 进度条 ─── */
+    .progress-bar {
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #ff6600;
+      border-radius: 99px;
+      transition: width 0.4s;
+    }
+
+    /* ─── section 标题 ─── */
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="layout">
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span>🐰</span>
+      <div>
+        <h2>RabbitMQ<br/>学习平台</h2>
+        <small>Spring Cloud 实战</small>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">学习</div>
+      <div class="nav-item active" onclick="showPage('overview')">
+        🏠 <span>概览</span>
+      </div>
+      <div class="nav-item" onclick="showPage('concepts')">
+        📚 <span>核心概念</span>
+      </div>
+      <div class="nav-item" onclick="showPage('patterns')">
+        🔀 <span>消息模式</span>
+      </div>
+
+      <div class="nav-group-label">实操</div>
+      <div class="nav-item" onclick="showPage('orders')">
+        📦 <span>订单管理</span>
+      </div>
+      <div class="nav-item" onclick="showPage('demo')">
+        🚀 <span>快速演示</span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar" id="user-avatar">?</div>
+        <div class="user-detail">
+          <strong id="user-name">-</strong>
+          <span id="user-role">-</span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="AuthAPI.logout()">🚪 退出登录</button>
+    </div>
+  </aside>
+
+  <!-- ===== 主内容 ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">概览</h1>
+        <div class="breadcrumb" id="page-breadcrumb">RabbitMQ 学习平台 / 概览</div>
+      </div>
+      <div style="font-size:13px;color:#94a3b8;">
+        网关: <code style="color:#ff6600">http://localhost:8080</code>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ========== 页面：概览 ========== -->
+      <div id="page-overview" class="page active">
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="label">📦 总订单数</div>
+            <div class="value" id="stat-orders">-</div>
+            <div class="desc">实时从 order-service 获取</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">✅ 已支付</div>
+            <div class="value" id="stat-paid">-</div>
+            <div class="progress-bar"><div class="progress-fill" id="stat-paid-bar" style="width:0%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="label">❌ 已取消</div>
+            <div class="value" id="stat-cancelled">-</div>
+            <div class="progress-bar"><div class="progress-fill" id="stat-cancelled-bar" style="width:0%;background:#ef4444"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="label">⏳ 待支付</div>
+            <div class="value" id="stat-pending">-</div>
+            <div class="desc">PENDING 状态</div>
+          </div>
+        </div>
+
+        <!-- 架构流程图 -->
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">🏗️ 系统架构（消息流向）</div>
+          <div class="card-body">
+            <div class="flow-diagram">
+              <div class="flow-node producer">
+                <div class="node-icon">📱</div>
+                <div class="node-name">前端</div>
+                <div class="node-sub">localhost:5500</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node exchange">
+                <div class="node-icon">🔀</div>
+                <div class="node-name">Gateway</div>
+                <div class="node-sub">:8080 JWT鉴权</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node producer">
+                <div class="node-icon">📦</div>
+                <div class="node-name">order-service</div>
+                <div class="node-sub">:8081 生产者</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node exchange">
+                <div class="node-icon">🔁</div>
+                <div class="node-name">RabbitMQ</div>
+                <div class="node-sub">Exchange/Queue</div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node consumer">
+                <div class="node-icon">🔔</div>
+                <div class="node-name">notification</div>
+                <div class="node-sub">:8082 消费者</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 服务状态 -->
+        <div class="card">
+          <div class="card-header">🌐 服务地址速查</div>
+          <div class="card-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>服务</th><th>地址</th><th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>🔀 Gateway</td><td><code>http://localhost:8080</code></td><td>统一入口，JWT 鉴权</td></tr>
+                <tr><td>👤 User Service</td><td><code>http://localhost:8084</code></td><td>登录/注册/JWT</td></tr>
+                <tr><td>📦 Order Service</td><td><code>http://localhost:8081</code></td><td>订单 + RabbitMQ 生产者</td></tr>
+                <tr><td>🔔 Notification</td><td><code>http://localhost:8082</code></td><td>RabbitMQ 消费者</td></tr>
+                <tr><td>🐰 RabbitMQ 管理界面</td><td><code>http://localhost:15672</code></td><td>guest / guest</td></tr>
+                <tr><td>🗄️ Nacos</td><td><code>http://localhost:8848/nacos</code></td><td>服务注册中心</td></tr>
+                <tr><td>💾 H2 控制台</td><td><code>http://localhost:8084/h2-console</code></td><td>用户数据库（内存）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 页面：核心概念 ========== -->
+      <div id="page-concepts" class="page">
+        <div class="section-title">📚 RabbitMQ 核心概念</div>
+        <div class="concept-grid">
+
+          <div class="concept-card">
+            <div class="concept-icon">📨</div>
+            <div class="concept-title">Message（消息）</div>
+            <div class="concept-desc">
+              消息是 RabbitMQ 传输的基本单元，由 <strong>消息体（Payload）</strong> 和
+              <strong>消息属性（Properties）</strong> 组成。
+              消息体是任意字节，属性包含路由键、优先级、TTL、持久化标志等。
+            </div>
+            <span class="concept-tag">基础</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">🔌</div>
+            <div class="concept-title">Producer（生产者）</div>
+            <div class="concept-desc">
+              消息的发送方，负责将消息发布到交换机。本项目中 <code>order-service</code>
+              是生产者，创建/支付/取消订单时发布消息。
+            </div>
+            <span class="concept-tag">基础</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">🔔</div>
+            <div class="concept-title">Consumer（消费者）</div>
+            <div class="concept-desc">
+              消息的接收方，订阅队列并处理消息。本项目中 <code>notification-service</code>
+              是消费者，接收订单事件后发送通知。支持手动 ACK 防止消息丢失。
+            </div>
+            <span class="concept-tag">基础</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">🔀</div>
+            <div class="concept-title">Exchange（交换机）</div>
+            <div class="concept-desc">
+              消息路由中枢，接收来自生产者的消息并按类型转发到对应队列。
+              四种类型：<strong>Direct</strong>（精确）、<strong>Fanout</strong>（广播）、
+              <strong>Topic</strong>（模糊）、<strong>Headers</strong>（属性匹配）。
+            </div>
+            <span class="concept-tag">核心</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">📥</div>
+            <div class="concept-title">Queue（队列）</div>
+            <div class="concept-desc">
+              消息的存储容器，遵循 FIFO 原则。支持持久化（重启不丢失）、
+              独占（仅一个连接可用）、自动删除（无消费者时删除）等属性。
+            </div>
+            <span class="concept-tag">核心</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">🔑</div>
+            <div class="concept-title">Routing Key（路由键）</div>
+            <div class="concept-desc">
+              生产者发送消息时指定的标签。Direct 交换机要求精确匹配，
+              Topic 交换机支持通配符（<code>*</code> 匹配一个词，<code>#</code> 匹配零或多个词）。
+            </div>
+            <span class="concept-tag">核心</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">🪢</div>
+            <div class="concept-title">Binding（绑定）</div>
+            <div class="concept-desc">
+              将交换机与队列关联的规则，绑定时可指定 Binding Key。
+              交换机根据消息的 Routing Key 与 Binding Key 的匹配规则决定消息去向。
+            </div>
+            <span class="concept-tag">核心</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">⏰</div>
+            <div class="concept-title">TTL（消息过期）</div>
+            <div class="concept-desc">
+              为消息或队列设置生存时间（Time-To-Live）。过期的消息会被
+              丢弃或进入 <strong>死信交换机（DLX）</strong>，可用于延迟队列、订单超时场景。
+            </div>
+            <span class="concept-tag">高级</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">💀</div>
+            <div class="concept-title">Dead Letter Queue（死信队列）</div>
+            <div class="concept-desc">
+              消息变为"死信"的三种情况：①消息过期、②队列已满被拒绝、③消费者 Nack 且 requeue=false。
+              死信会转发到 DLX，是实现延迟消费和容错的重要手段。
+            </div>
+            <span class="concept-tag">高级</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">✅</div>
+            <div class="concept-title">消息确认（ACK / NACK）</div>
+            <div class="concept-desc">
+              消费者告知 Broker 消息已处理（ACK）或处理失败（NACK）。
+              手动 ACK 模式下，消息在确认前不会从队列删除，保证消息不丢失。
+              本项目所有消费者均使用手动 ACK。
+            </div>
+            <span class="concept-tag">可靠性</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">📬</div>
+            <div class="concept-title">Publisher Confirm（发布确认）</div>
+            <div class="concept-desc">
+              生产者通过 Confirm 机制确认消息已到达 Broker（交换机）。
+              与 Publisher Returns 配合使用，可确保消息从生产者到队列的全链路不丢失。
+            </div>
+            <span class="concept-tag">可靠性</span>
+          </div>
+
+          <div class="concept-card">
+            <div class="concept-icon">⚖️</div>
+            <div class="concept-title">Prefetch（预取数量）</div>
+            <div class="concept-desc">
+              消费者每次从 Broker 预取的最大消息数量（QoS 控制）。
+              设为 1 时，消费者处理完当前消息才获取下一条，实现公平分发，
+              避免某个消费者堆积过多任务。
+            </div>
+            <span class="concept-tag">性能</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========== 页面：消息模式 ========== -->
+      <div id="page-patterns" class="page">
+        <div class="section-title">🔀 RabbitMQ 消息模式</div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- Simple Queue -->
+          <div class="card">
+            <div class="card-header">1️⃣ 简单队列（Simple Queue）</div>
+            <div class="card-body">
+              <p style="font-size:14px;color:#64748b;margin-bottom:12px;">
+                最基础的模式：一个生产者 → 一个队列 → 一个消费者。消息按顺序被唯一消费者处理。
+              </p>
+              <div class="flow-diagram">
+                <div class="flow-node producer"><div class="node-icon">📦</div><div class="node-name">Producer</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node queue"><div class="node-icon">📥</div><div class="node-name">Queue</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node consumer"><div class="node-icon">🔔</div><div class="node-name">Consumer</div></div>
+              </div>
+              <div class="code-block">
+<span class="cm">// 发送消息（默认交换机，Routing Key = 队列名）</span>
+<span class="kw">rabbitTemplate</span>.convertAndSend(<span class="st">"simple.queue"</span>, message);
+              </div>
+            </div>
+          </div>
+
+          <!-- Work Queue -->
+          <div class="card">
+            <div class="card-header">2️⃣ 工作队列（Work Queue）</div>
+            <div class="card-body">
+              <p style="font-size:14px;color:#64748b;margin-bottom:12px;">
+                多个消费者竞争消费同一队列，消息被均衡分配，提升吞吐量。
+                本项目中 notification-service 启动了 2 个并发消费者。
+              </p>
+              <div class="flow-diagram">
+                <div class="flow-node producer"><div class="node-icon">📦</div><div class="node-name">Producer</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node queue"><div class="node-icon">📥</div><div class="node-name">Queue</div></div>
+                <div class="flow-arrow">→</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <div class="flow-node consumer"><div class="node-icon">🔔</div><div class="node-name">Consumer 1</div></div>
+                  <div class="flow-node consumer"><div class="node-icon">🔔</div><div class="node-name">Consumer 2</div></div>
+                </div>
+              </div>
+              <div class="code-block">
+<span class="cm">// 配置并发消费者</span>
+<span class="st">concurrency</span>: 2
+<span class="st">max-concurrency</span>: 5
+<span class="st">prefetch</span>: 1  <span class="cm">// 公平分发</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fanout -->
+          <div class="card">
+            <div class="card-header">3️⃣ 发布/订阅（Fanout Exchange）</div>
+            <div class="card-body">
+              <p style="font-size:14px;color:#64748b;margin-bottom:12px;">
+                Fanout 交换机将消息广播给所有绑定的队列，忽略 Routing Key。
+                适合通知、日志广播等场景。
+              </p>
+              <div class="flow-diagram">
+                <div class="flow-node producer"><div class="node-icon">📦</div><div class="node-name">Producer</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node exchange"><div class="node-icon">📢</div><div class="node-name">Fanout</div><div class="node-sub">order.fanout</div></div>
+                <div class="flow-arrow">→</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <div class="flow-node queue"><div class="node-icon">📥</div><div class="node-name">email.queue</div></div>
+                  <div class="flow-node queue"><div class="node-icon">📥</div><div class="node-name">sms.queue</div></div>
+                  <div class="flow-node queue"><div class="node-icon">📥</div><div class="node-name">log.queue</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Topic -->
+          <div class="card">
+            <div class="card-header">4️⃣ 路由匹配（Topic Exchange）</div>
+            <div class="card-body">
+              <p style="font-size:14px;color:#64748b;margin-bottom:12px;">
+                Topic 交换机支持通配符路由，<code>*</code> 匹配一个词，<code>#</code> 匹配零或多个词。
+                本项目使用 Topic 交换机按订单事件类型路由到不同处理队列。
+              </p>
+              <div class="code-block">
+<span class="cm">// Binding Key 示例</span>
+order.<span class="st">*</span>         → 匹配 order.created / order.paid / order.cancelled
+<span class="st">#</span>.urgent      → 匹配任意以 .urgent 结尾的 Key
+order.<span class="st">#</span>         → 匹配所有 order. 开头的 Key
+              </div>
+            </div>
+          </div>
+
+          <!-- TTL + DLQ -->
+          <div class="card">
+            <div class="card-header">5️⃣ TTL + 死信队列（延迟消费）</div>
+            <div class="card-body">
+              <p style="font-size:14px;color:#64748b;margin-bottom:12px;">
+                消息发送到 TTL 队列，5 秒后过期进入死信交换机（DLX），再路由到死信队列被消费者处理。
+                这是实现"订单 N 分钟后自动取消"的经典方案。
+              </p>
+              <div class="flow-diagram">
+                <div class="flow-node producer"><div class="node-icon">📦</div><div class="node-name">Producer</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node queue"><div class="node-icon">⏰</div><div class="node-name">TTL Queue</div><div class="node-sub">5s 过期</div></div>
+                <div class="flow-arrow">⟶ 过期</div>
+                <div class="flow-node exchange"><div class="node-icon">💀</div><div class="node-name">DLX</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-node consumer"><div class="node-icon">🔔</div><div class="node-name">DL Consumer</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========== 页面：订单管理 ========== -->
+      <div id="page-orders" class="page">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div class="section-title" style="margin:0;">📦 订单管理</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="loadOrders()">🔄 刷新</button>
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">➕ 创建订单</button>
+          </div>
+        </div>
+
+        <div id="orders-alert"></div>
+
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <div class="table-wrap">
+              <table id="orders-table">
+                <thead>
+                  <tr>
+                    <th>订单号</th>
+                    <th>用户</th>
+                    <th>商品</th>
+                    <th>金额</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-tbody">
+                  <tr><td colspan="7" class="text-center text-muted" style="padding:40px;">
+                    <div class="spinner" style="margin:0 auto 8px;"></div>加载中...
+                  </td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 页面：快速演示 ========== -->
+      <div id="page-demo" class="page">
+        <div class="section-title">🚀 快速演示（API 直接测试）</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+          <!-- 登录演示 -->
+          <div class="card">
+            <div class="card-header">🔑 登录接口</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>用户名</label>
+                <input id="demo-username" class="form-control" value="admin" />
+              </div>
+              <div class="form-group">
+                <label>密码</label>
+                <input id="demo-password" class="form-control" type="password" value="admin123" />
+              </div>
+              <button class="btn btn-primary w-full" onclick="demoLogin()">发送登录请求</button>
+              <div id="demo-login-result" class="code-block mt-4" style="display:none;min-height:60px;"></div>
+            </div>
+          </div>
+
+          <!-- 创建订单演示 -->
+          <div class="card">
+            <div class="card-header">📦 创建订单</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>商品名称</label>
+                <input id="demo-product" class="form-control" value="RabbitMQ 实战手册" />
+              </div>
+              <div class="form-group">
+                <label>金额（元）</label>
+                <input id="demo-amount" class="form-control" type="number" value="99.00" step="0.01" />
+              </div>
+              <button class="btn btn-success w-full" onclick="demoCreateOrder()">发送创建请求</button>
+              <div id="demo-order-result" class="code-block mt-4" style="display:none;min-height:60px;"></div>
+            </div>
+          </div>
+
+          <!-- TTL 演示 -->
+          <div class="card">
+            <div class="card-header">⏰ TTL 死信队列演示</div>
+            <div class="card-body">
+              <p class="text-sm text-muted" style="margin-bottom:12px;">
+                发送一条 TTL 订单消息，消息 5 秒后过期进入死信队列，观察 notification-service 日志。
+              </p>
+              <button class="btn btn-warning w-full" onclick="demoTtlOrder()" style="color:#fff;background:#f59e0b;">
+                ⏰ 发送 TTL 消息
+              </button>
+              <div id="demo-ttl-result" class="code-block mt-4" style="display:none;min-height:60px;"></div>
+            </div>
+          </div>
+
+          <!-- API 说明 -->
+          <div class="card">
+            <div class="card-header">📖 接口速查</div>
+            <div class="card-body">
+              <table style="font-size:13px;">
+                <tr><td style="padding:6px;"><code>POST /api/auth/login</code></td><td>登录</td></tr>
+                <tr><td style="padding:6px;"><code>POST /api/auth/register</code></td><td>注册</td></tr>
+                <tr><td style="padding:6px;"><code>GET /api/orders</code></td><td>订单列表</td></tr>
+                <tr><td style="padding:6px;"><code>POST /api/orders</code></td><td>创建订单</td></tr>
+                <tr><td style="padding:6px;"><code>POST /api/orders/ttl</code></td><td>TTL 订单</td></tr>
+                <tr><td style="padding:6px;"><code>PUT /api/orders/{id}/pay</code></td><td>支付</td></tr>
+                <tr><td style="padding:6px;"><code>PUT /api/orders/{id}/cancel</code></td><td>取消</td></tr>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ===== 创建订单对话框 ===== -->
+<div id="modal-create" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-title">➕ 创建新订单</div>
+
+    <div id="create-modal-error" class="alert alert-danger" style="display:none;"></div>
+
+    <div class="order-form-grid">
+      <div class="form-group">
+        <label>用户名 <span style="color:#ef4444">*</span></label>
+        <input id="m-username" class="form-control" placeholder="如：张三" />
+      </div>
+      <div class="form-group">
+        <label>商品名称 <span style="color:#ef4444">*</span></label>
+        <input id="m-product" class="form-control" placeholder="如：RabbitMQ 书籍" />
+      </div>
+      <div class="form-group">
+        <label>金额（元）<span style="color:#ef4444">*</span></label>
+        <input id="m-amount" class="form-control" type="number" placeholder="99.00" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label>数量</label>
+        <input id="m-quantity" class="form-control" type="number" value="1" min="1" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>备注</label>
+      <input id="m-remark" class="form-control" placeholder="可选" />
+    </div>
+    <div class="form-group">
+      <label>
+        <input id="m-urgent" type="checkbox" /> 紧急订单（发送到紧急队列）
+      </label>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">取消</button>
+      <button id="create-submit-btn" class="btn btn-primary" onclick="submitCreateOrder()">创建订单</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  // ─── 鉴权检查 ───
+  if (!Auth.isLoggedIn()) {
+    window.location.href = 'index.html';
+  }
+
+  // ─── 初始化用户信息 ───
+  const user = Auth.getUser();
+  if (user) {
+    document.getElementById('user-name').textContent = user.username;
+    document.getElementById('user-role').textContent = user.role === 'ADMIN' ? '管理员' : '普通用户';
+    document.getElementById('user-avatar').textContent = user.username.charAt(0).toUpperCase();
+  }
+
+  // ─── 页面切换 ───
+  const pageMap = {
+    overview:  { title: '概览',      breadcrumb: '概览' },
+    concepts:  { title: '核心概念',   breadcrumb: '学习 / 核心概念' },
+    patterns:  { title: '消息模式',   breadcrumb: '学习 / 消息模式' },
+    orders:    { title: '订单管理',   breadcrumb: '实操 / 订单管理' },
+    demo:      { title: '快速演示',   breadcrumb: '实操 / 快速演示' },
+  };
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelector(`.nav-item[onclick="showPage('${name}')"]`).classList.add('active');
+
+    const info = pageMap[name];
+    document.getElementById('page-title').textContent = info.title;
+    document.getElementById('page-breadcrumb').textContent = 'RabbitMQ 学习平台 / ' + info.breadcrumb;
+
+    if (name === 'orders') loadOrders();
+    if (name === 'overview') loadStats();
+  }
+
+  // ─── 加载统计数据 ───
+  async function loadStats() {
+    try {
+      const orders = await OrderAPI.list();
+      const total = orders.length;
+      const paid = orders.filter(o => o.status === 'PAID' || o.status === 'COMPLETED').length;
+      const cancelled = orders.filter(o => o.status === 'CANCELLED').length;
+      const pending = orders.filter(o => o.status === 'PENDING').length;
+
+      document.getElementById('stat-orders').textContent = total;
+      document.getElementById('stat-paid').textContent = paid;
+      document.getElementById('stat-cancelled').textContent = cancelled;
+      document.getElementById('stat-pending').textContent = pending;
+
+      if (total > 0) {
+        document.getElementById('stat-paid-bar').style.width = (paid / total * 100) + '%';
+        document.getElementById('stat-cancelled-bar').style.width = (cancelled / total * 100) + '%';
+      }
+    } catch (e) {
+      // 服务未启动时静默忽略
+    }
+  }
+
+  // ─── 加载订单列表 ───
+  async function loadOrders() {
+    const tbody = document.getElementById('orders-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:40px;"><div class="spinner" style="margin:0 auto 8px;"></div>加载中...</td></tr>';
+
+    try {
+      const orders = await OrderAPI.list();
+      if (!orders || orders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:40px;">暂无订单，点击「创建订单」体验 RabbitMQ 消息发送</td></tr>';
+        return;
+      }
+      tbody.innerHTML = orders.map(o => `
+        <tr>
+          <td><code style="font-size:12px;">${o.orderNo}</code></td>
+          <td>${o.username || '-'}</td>
+          <td>${o.productName}${o.urgent ? ' <span class="badge badge-warning">紧急</span>' : ''}</td>
+          <td>¥${parseFloat(o.amount).toFixed(2)}</td>
+          <td>${statusBadge(o.status)}</td>
+          <td class="text-sm text-muted">${fmtDate(o.createTime)}</td>
+          <td>
+            ${o.status === 'PENDING' ? `<button class="btn btn-success btn-sm" onclick="payOrder(${o.id})">支付</button>` : ''}
+            ${o.status === 'PENDING' ? `<button class="btn btn-danger btn-sm" onclick="cancelOrder(${o.id})" style="margin-left:4px;">取消</button>` : ''}
+          </td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:40px;">
+        <div class="alert alert-warning" style="display:inline-block;">
+          ⚠️ 无法连接 order-service，请确保后端已启动<br/>
+          <small>${e.message}</small>
+        </div>
+      </td></tr>`;
+    }
+  }
+
+  async function payOrder(id) {
+    try {
+      await OrderAPI.pay(id);
+      showToast('支付成功！已触发 RabbitMQ 支付通知消息', 'success');
+      loadOrders();
+    } catch (e) {
+      showToast('支付失败: ' + e.message, 'error');
+    }
+  }
+
+  async function cancelOrder(id) {
+    try {
+      await OrderAPI.cancel(id);
+      showToast('订单已取消，已触发 RabbitMQ 取消通知消息', 'success');
+      loadOrders();
+    } catch (e) {
+      showToast('取消失败: ' + e.message, 'error');
+    }
+  }
+
+  // ─── 创建订单对话框 ───
+  function openCreateModal() {
+    document.getElementById('modal-create').classList.remove('hidden');
+    document.getElementById('create-modal-error').style.display = 'none';
+  }
+
+  function closeModal() {
+    document.getElementById('modal-create').classList.add('hidden');
+  }
+
+  async function submitCreateOrder() {
+    const username = document.getElementById('m-username').value.trim();
+    const product  = document.getElementById('m-product').value.trim();
+    const amount   = document.getElementById('m-amount').value;
+    const quantity = document.getElementById('m-quantity').value || '1';
+    const remark   = document.getElementById('m-remark').value.trim();
+    const urgent   = document.getElementById('m-urgent').checked;
+
+    const errEl = document.getElementById('create-modal-error');
+    if (!username || !product || !amount) {
+      errEl.textContent = '❌ 用户名、商品名称和金额为必填项';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    const btn = document.getElementById('create-submit-btn');
+    setLoading(btn, true);
+    errEl.style.display = 'none';
+
+    try {
+      await OrderAPI.create({
+        userId: Auth.getUser()?.id || 1,
+        username, productName: product,
+        amount: parseFloat(amount),
+        quantity: parseInt(quantity),
+        remark: remark || undefined,
+        urgent,
+      });
+      showToast('订单创建成功！RabbitMQ 消息已发送 🐰', 'success');
+      closeModal();
+      loadOrders();
+    } catch (e) {
+      errEl.textContent = '❌ ' + e.message;
+      errEl.style.display = 'block';
+    } finally {
+      setLoading(btn, false);
+    }
+  }
+
+  // 点击遮罩关闭
+  document.getElementById('modal-create').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ─── 快速演示 ───
+  async function demoLogin() {
+    const username = document.getElementById('demo-username').value;
+    const password = document.getElementById('demo-password').value;
+    const resultEl = document.getElementById('demo-login-result');
+    resultEl.style.display = 'block';
+    resultEl.textContent = '发送中...';
+    try {
+      const data = await AuthAPI.login(username, password);
+      resultEl.textContent = JSON.stringify({ token: data.token.slice(0, 40) + '...', userInfo: data.userInfo, expiresIn: data.expiresIn }, null, 2);
+      showToast('登录成功', 'success');
+    } catch (e) {
+      resultEl.textContent = '错误: ' + e.message;
+    }
+  }
+
+  async function demoCreateOrder() {
+    const product = document.getElementById('demo-product').value;
+    const amount  = parseFloat(document.getElementById('demo-amount').value);
+    const resultEl = document.getElementById('demo-order-result');
+    resultEl.style.display = 'block';
+    resultEl.textContent = '发送中...';
+    try {
+      const data = await OrderAPI.create({
+        userId: 1, username: 'demo用户',
+        productName: product, amount, quantity: 1,
+      });
+      resultEl.textContent = JSON.stringify(data, null, 2);
+      showToast('订单创建成功，消息已发送到 RabbitMQ', 'success');
+    } catch (e) {
+      resultEl.textContent = '错误: ' + e.message;
+    }
+  }
+
+  async function demoTtlOrder() {
+    const resultEl = document.getElementById('demo-ttl-result');
+    resultEl.style.display = 'block';
+    resultEl.textContent = '发送中...';
+    try {
+      const data = await OrderAPI.createTtl({
+        userId: 1, username: 'TTL测试用户',
+        productName: 'TTL 测试商品', amount: 0.01, quantity: 1,
+      });
+      resultEl.textContent = JSON.stringify(data, null, 2) + '\n\n// ⏰ 消息将在 5 秒后过期进入死信队列\n// 请查看 notification-service 日志';
+      showToast('TTL 消息已发送，5 秒后进入死信队列', 'info');
+    } catch (e) {
+      resultEl.textContent = '错误: ' + e.message;
+    }
+  }
+
+  // ─── 初始化 ───
+  loadStats();
+</script>
+</body>
+</html>

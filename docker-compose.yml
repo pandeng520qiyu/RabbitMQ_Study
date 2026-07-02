@@ -49,6 +49,27 @@ services:
       - "8080:8080"
     environment:
       - NACOS_SERVER_ADDR=nacos:8848
+      - JWT_SECRET=${JWT_SECRET:-rabbitmq-study-secret-key-must-be-at-least-32bytes!}
+    depends_on:
+      - nacos
+    networks:
+      - study-net
+
+  # ===================================================================
+  # User Service - 用户认证服务（登录 / 注册 / JWT）
+  # 访问地址：http://localhost:8084
+  # H2 控制台：http://localhost:8084/h2-console
+  # ===================================================================
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8084:8084"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - JWT_SECRET=${JWT_SECRET:-rabbitmq-study-secret-key-must-be-at-least-32bytes!}
     depends_on:
       - nacos
     networks:

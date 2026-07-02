@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 · RabbitMQ 学习平台</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #ff6600 0%, #cc3300 100%);
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+      padding: 16px;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      box-shadow: 0 20px 40px rgb(0 0 0 / 0.25);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      font-size: 52px;
+      line-height: 1;
+    }
+
+    .logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 10px;
+    }
+
+    .logo p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #64748b;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: #fff;
+      color: #ff6600;
+      box-shadow: 0 1px 4px rgb(0 0 0 / 0.1);
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      background: #ff6600;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .submit-btn:hover { background: #cc5200; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .hint {
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 20px;
+    }
+
+    .hint strong { color: #ff6600; }
+
+    .form-control { margin-bottom: 0; }
+    .form-group   { margin-bottom: 16px; }
+
+    #login-error,
+    #register-error { display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <!-- Logo -->
+      <div class="logo">
+        <div class="logo-icon">🐰</div>
+        <h1>RabbitMQ 学习平台</h1>
+        <p>Spring Cloud + RabbitMQ 消息队列实战</p>
+      </div>
+
+      <!-- 登录 / 注册 切换 -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">登 录</button>
+        <button class="tab-btn"       onclick="switchTab('register')">注 册</button>
+      </div>
+
+      <!-- 登录表单 -->
+      <div id="pane-login" class="tab-pane active">
+        <div id="login-error" class="alert alert-danger"></div>
+
+        <div class="form-group">
+          <label for="login-username">用户名</label>
+          <input id="login-username" type="text" class="form-control"
+                 placeholder="请输入用户名" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="login-password">密 码</label>
+          <input id="login-password" type="password" class="form-control"
+                 placeholder="请输入密码" autocomplete="current-password" />
+        </div>
+
+        <button id="login-btn" class="submit-btn" onclick="doLogin()">
+          🔑 立即登录
+        </button>
+
+        <div class="hint">
+          演示账户：<strong>admin / admin123</strong> 或 <strong>guest / guest123</strong>
+        </div>
+      </div>
+
+      <!-- 注册表单 -->
+      <div id="pane-register" class="tab-pane">
+        <div id="register-error" class="alert alert-danger"></div>
+
+        <div class="form-group">
+          <label for="reg-username">用户名 <span style="color:#ef4444">*</span></label>
+          <input id="reg-username" type="text" class="form-control"
+                 placeholder="3~50 位字母/数字" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">密 码 <span style="color:#ef4444">*</span></label>
+          <input id="reg-password" type="password" class="form-control"
+                 placeholder="至少 6 位" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label for="reg-email">邮 箱（可选）</label>
+          <input id="reg-email" type="email" class="form-control"
+                 placeholder="example@email.com" />
+        </div>
+
+        <button id="register-btn" class="submit-btn" onclick="doRegister()">
+          📝 立即注册
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // 已登录则跳转仪表板
+    if (Auth.isLoggedIn()) {
+      window.location.href = 'dashboard.html';
+    }
+
+    function switchTab(tab) {
+      ['login', 'register'].forEach(t => {
+        document.getElementById('pane-' + t).classList.toggle('active', t === tab);
+        document.querySelectorAll('.tab-btn')[t === 'login' ? 0 : 1].classList.toggle('active', t === tab);
+      });
+      // 清空错误提示
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('register-error').style.display = 'none';
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = '❌ ' + msg;
+      el.style.display = 'block';
+    }
+
+    async function doLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-btn');
+
+      if (!username || !password) {
+        showError('login-error', '用户名和密码不能为空');
+        return;
+      }
+
+      setLoading(btn, true);
+      document.getElementById('login-error').style.display = 'none';
+
+      try {
+        await AuthAPI.login(username, password);
+        showToast('登录成功，即将跳转...', 'success');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+      } catch (e) {
+        showError('login-error', e.message);
+      } finally {
+        setLoading(btn, false);
+      }
+    }
+
+    async function doRegister() {
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const email    = document.getElementById('reg-email').value.trim();
+      const btn = document.getElementById('register-btn');
+
+      if (!username || !password) {
+        showError('register-error', '用户名和密码不能为空');
+        return;
+      }
+      if (password.length < 6) {
+        showError('register-error', '密码至少 6 位');
+        return;
+      }
+
+      setLoading(btn, true);
+      document.getElementById('register-error').style.display = 'none';
+
+      try {
+        await AuthAPI.register(username, password, email || undefined);
+        showToast('注册成功，请登录', 'success');
+        // 切换到登录页并填入用户名
+        switchTab('login');
+        document.getElementById('login-username').value = username;
+        document.getElementById('login-password').focus();
+      } catch (e) {
+        showError('register-error', e.message);
+      } finally {
+        setLoading(btn, false);
+      }
+    }
+
+    // Enter 键提交
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const activePane = document.querySelector('.tab-pane.active').id;
+        if (activePane === 'pane-login') doLogin();
+        else doRegister();
+      }
+    });
+  </script>
+</body>
+</html>
