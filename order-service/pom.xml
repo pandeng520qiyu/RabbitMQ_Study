@@ -33,11 +33,13 @@
         <dependency>
             <groupId>com.dameng</groupId>
             <artifactId>DmJdbcDriver8</artifactId>
+            <version>${dameng.jdbc.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>com.dameng</groupId>
             <artifactId>DmDialect-for-hibernate6.2</artifactId>
+            <version>${dameng.hibernate.version}</version>
         </dependency>
         <!-- Nacos Discovery -->
         <dependency>

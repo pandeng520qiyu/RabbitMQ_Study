@@ -31,6 +31,8 @@
         <java.version>17</java.version>
         <spring-cloud.version>2022.0.4</spring-cloud.version>
         <spring-cloud-alibaba.version>2022.0.0.2</spring-cloud-alibaba.version>
+        <dameng.jdbc.version>8.1.4.125</dameng.jdbc.version>
+        <dameng.hibernate.version>8.1.4.93</dameng.hibernate.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
