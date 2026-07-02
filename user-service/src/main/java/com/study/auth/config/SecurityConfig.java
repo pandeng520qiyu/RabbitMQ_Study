@@ -28,7 +28,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 关闭 CSRF（前后端分离模式）
+                // 关闭 CSRF：本服务为无状态 JWT REST API
+                // JWT 存储在 localStorage 并通过 Authorization 请求头发送，
+                // 浏览器不会自动携带该 Header 进行跨站请求，因此不存在 CSRF 风险。
+                // 参考：https://security.stackexchange.com/a/166798
                 .csrf(AbstractHttpConfigurer::disable)
                 // 无状态 Session（JWT 无需 Session）
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
