@@ -5,24 +5,23 @@ spring:
   application:
     name: order-service
 
-  # H2 内存数据库（无需安装，学习用）
   datasource:
-    url: jdbc:h2:mem:orderdb;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
-
-  h2:
-    console:
-      # 访问 H2 控制台：http://localhost:8081/h2-console
-      enabled: true
-      path: /h2-console
+    url: ${DM_JDBC_URL:jdbc:dm://localhost:5236/RABBITMQ_STUDY}
+    username: ${DM_USERNAME:SYSDBA}
+    password: ${DM_PASSWORD:SYSDBA}
+    driver-class-name: dm.jdbc.driver.DmDriver
 
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: dm.hibernate.dialect.DmDialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
 
   # RabbitMQ 连接配置
   rabbitmq:
@@ -44,14 +43,6 @@ spring:
         # 并发消费者数（演示 Work Queue 竞争消费）
         concurrency: 2
         max-concurrency: 5
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
 
 management:
   endpoints:

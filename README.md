@@ -1,5 +1,7 @@
 # RabbitMQ_Study - SpringCloud 学习项目
 
+> 当前仓库只有后端服务，没有独立前端页面；服务发现默认使用 Nacos，订单服务默认连接达梦数据库。
+
 > 基于 **Spring Cloud + RabbitMQ** 的微服务学习项目，涵盖 RabbitMQ 核心消息模式，并支持后续学习 **MCP（Model Context Protocol）**。
 
 ---
@@ -9,7 +11,7 @@
 ```
 rabbitmq-study/
 ├── common/              # 公共模块（DTO、事件、常量）
-├── eureka-server/       # 服务注册中心（端口 8761）
+├── eureka-server/       # 历史 Eureka 示例模块（当前默认不启用）
 ├── gateway/             # API 网关（端口 8080）
 ├── order-service/       # 订单服务 - RabbitMQ 生产者（端口 8081）
 ├── notification-service/# 通知服务 - RabbitMQ 消费者（端口 8082）
@@ -36,23 +38,20 @@ docker-compose ps
 
 ### 方式二：本地启动
 
-**前提**：本地安装 RabbitMQ（默认 localhost:5672）
+**前提**：本地安装 RabbitMQ、Nacos（默认 localhost:8848）和达梦数据库（默认 localhost:5236）
 
 ```bash
 # 按顺序启动：
-# 1. 启动 Eureka Server
-cd eureka-server && mvn spring-boot:run
-
-# 2. 启动 Gateway
+# 1. 启动 Gateway
 cd gateway && mvn spring-boot:run
 
-# 3. 启动 Order Service
+# 2. 启动 Order Service
 cd order-service && mvn spring-boot:run
 
-# 4. 启动 Notification Service
+# 3. 启动 Notification Service
 cd notification-service && mvn spring-boot:run
 
-# 5. 启动 MCP Server（可选）
+# 4. 启动 MCP Server（可选）
 cd mcp-server && mvn spring-boot:run
 ```
 
@@ -62,13 +61,13 @@ cd mcp-server && mvn spring-boot:run
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
-| Eureka 控制台 | http://localhost:8761 | 服务注册列表 |
+| Nacos 控制台 | http://localhost:8848/nacos | 服务注册列表 |
 | API 网关 | http://localhost:8080 | 统一入口 |
 | RabbitMQ 管理界面 | http://localhost:15672 | 账号: guest/guest |
 | 订单服务 | http://localhost:8081 | 直接访问 |
 | 通知服务 | http://localhost:8082 | 直接访问 |
 | MCP 服务器 | http://localhost:8083 | MCP 学习 |
-| H2 控制台（order-service） | http://localhost:8081/h2-console | 内存数据库 |
+| 达梦数据库 | jdbc:dm://localhost:5236/RABBITMQ_STUDY | 订单数据存储 |
 
 ---
 
@@ -301,9 +300,9 @@ spring:
 | Spring Boot | 3.1.5 | 基础框架 |
 | Spring Cloud | 2022.0.4 | 微服务组件 |
 | Spring AMQP | 3.x | RabbitMQ 集成 |
-| Netflix Eureka | - | 服务注册发现 |
+| Nacos Discovery | - | 服务注册发现 |
 | Spring Cloud Gateway | - | API 网关 |
-| H2 Database | - | 内存数据库（学习用） |
+| Dameng Database | - | 订单持久化 |
 | RabbitMQ | 3.12 | 消息队列 |
 | Java | 17 | 运行环境 |
 | Docker | - | 容器化部署 |

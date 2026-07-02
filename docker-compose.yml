@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: nacos-server
+    ports:
+      - "8848:8848"
+    environment:
+      MODE: standalone
+    networks:
+      - study-net
+
   # ===================================================================
   # RabbitMQ - 消息队列（核心服务）
   # 管理界面：http://localhost:15672
@@ -27,24 +37,6 @@ services:
       - study-net
 
   # ===================================================================
-  # Eureka Server - 服务注册中心
-  # 访问地址：http://localhost:8761
-  # ===================================================================
-  eureka-server:
-    build:
-      context: .
-      dockerfile: eureka-server/Dockerfile
-    container_name: eureka-server
-    ports:
-      - "8761:8761"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    depends_on:
-      - rabbitmq
-    networks:
-      - study-net
-
-  # ===================================================================
   # Gateway - API 网关
   # 访问地址：http://localhost:8080
   # ===================================================================
@@ -56,9 +48,9 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - EUREKA_URL=http://eureka-server:8761/eureka/
+      - NACOS_SERVER_ADDR=nacos:8848
     depends_on:
-      - eureka-server
+      - nacos
     networks:
       - study-net
 
@@ -78,11 +70,14 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASS=guest
-      - EUREKA_URL=http://eureka-server:8761/eureka/
+      - NACOS_SERVER_ADDR=nacos:8848
+      - DM_JDBC_URL=jdbc:dm://host.docker.internal:5236/RABBITMQ_STUDY
+      - DM_USERNAME=SYSDBA
+      - DM_PASSWORD=SYSDBA
     depends_on:
       rabbitmq:
         condition: service_healthy
-      eureka-server:
+      nacos:
         condition: service_started
     networks:
       - study-net
@@ -103,11 +98,11 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASS=guest
-      - EUREKA_URL=http://eureka-server:8761/eureka/
+      - NACOS_SERVER_ADDR=nacos:8848
     depends_on:
       rabbitmq:
         condition: service_healthy
-      eureka-server:
+      nacos:
         condition: service_started
     networks:
       - study-net
@@ -125,9 +120,9 @@ services:
       - "8083:8083"
     environment:
       - RABBITMQ_HOST=rabbitmq
-      - EUREKA_URL=http://eureka-server:8761/eureka/
+      - NACOS_SERVER_ADDR=nacos:8848
     depends_on:
-      - eureka-server
+      - nacos
     networks:
       - study-net
 

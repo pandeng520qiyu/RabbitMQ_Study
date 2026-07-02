@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: notification-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
 
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
@@ -26,14 +32,6 @@ spring:
           initial-interval: 1000
           max-attempts: 3
           multiplier: 2.0
-
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
 
 management:
   endpoints:
