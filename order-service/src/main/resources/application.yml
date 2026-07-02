@@ -1,0 +1,56 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+
+  datasource:
+    url: ${DM_JDBC_URL:jdbc:dm://localhost:5236/RABBITMQ_STUDY}
+    username: ${DM_USERNAME:SYSDBA}
+    password: ${DM_PASSWORD:SYSDBA}
+    driver-class-name: dm.jdbc.driver.DmDriver
+
+  jpa:
+    database-platform: dm.hibernate.dialect.DmDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+
+  # RabbitMQ 连接配置
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+    virtual-host: /
+    # Publisher Confirm（消息到达交换机的确认）
+    publisher-confirm-type: correlated
+    # 消息到达队列的确认（路由失败时返回）
+    publisher-returns: true
+    listener:
+      simple:
+        # 手动 ACK（消费者处理完才确认）
+        acknowledge-mode: manual
+        # 预取数量（Work Queue 中每个消费者最多同时处理的消息数）
+        prefetch: 1
+        # 并发消费者数（演示 Work Queue 竞争消费）
+        concurrency: 2
+        max-concurrency: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.study: DEBUG
+    org.springframework.amqp: DEBUG

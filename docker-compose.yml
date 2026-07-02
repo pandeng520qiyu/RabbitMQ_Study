@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: nacos-server
+    ports:
+      - "8848:8848"
+    environment:
+      MODE: standalone
+    networks:
+      - study-net
+
+  # ===================================================================
+  # RabbitMQ - 消息队列（核心服务）
+  # 管理界面：http://localhost:15672
+  # 账号：guest / guest
+  # ===================================================================
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq-study
+    ports:
+      - "5672:5672"    # AMQP 协议端口
+      - "15672:15672"  # 管理界面 HTTP 端口
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - study-net
+
+  # ===================================================================
+  # Gateway - API 网关
+  # 访问地址：http://localhost:8080
+  # ===================================================================
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - JWT_SECRET=${JWT_SECRET:-rabbitmq-study-secret-key-must-be-at-least-32bytes!}
+    depends_on:
+      - nacos
+    networks:
+      - study-net
+
+  # ===================================================================
+  # User Service - 用户认证服务（登录 / 注册 / JWT）
+  # 访问地址：http://localhost:8084
+  # H2 控制台：http://localhost:8084/h2-console
+  # ===================================================================
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8084:8084"
+    environment:
+      - NACOS_SERVER_ADDR=nacos:8848
+      - JWT_SECRET=${JWT_SECRET:-rabbitmq-study-secret-key-must-be-at-least-32bytes!}
+    depends_on:
+      - nacos
+    networks:
+      - study-net
+
+  # ===================================================================
+  # Order Service - 订单服务（RabbitMQ 生产者）
+  # 访问地址：http://localhost:8081
+  # ===================================================================
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "8081:8081"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - NACOS_SERVER_ADDR=nacos:8848
+      - DM_JDBC_URL=jdbc:dm://host.docker.internal:5236/RABBITMQ_STUDY
+      - DM_USERNAME=SYSDBA
+      - DM_PASSWORD=SYSDBA
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - study-net
+
+  # ===================================================================
+  # Notification Service - 通知服务（RabbitMQ 消费者）
+  # 访问地址：http://localhost:8082
+  # ===================================================================
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    container_name: notification-service
+    ports:
+      - "8082:8082"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASS=guest
+      - NACOS_SERVER_ADDR=nacos:8848
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - study-net
+
+  # ===================================================================
+  # MCP Server - Model Context Protocol 服务器
+  # 访问地址：http://localhost:8083
+  # ===================================================================
+  mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+    container_name: mcp-server
+    ports:
+      - "8083:8083"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - NACOS_SERVER_ADDR=nacos:8848
+    depends_on:
+      - nacos
+    networks:
+      - study-net
+
+networks:
+  study-net:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
